@@ -1,0 +1,4 @@
+name: issho
+version: '1.0'
+main: xyz.sujang.issho.Issho
+api-version: '1.21'
