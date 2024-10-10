@@ -1,6 +1,7 @@
 package xyz.sujang.issho
 
 import com.destroystokyo.paper.event.player.PlayerArmorChangeEvent
+import io.papermc.paper.event.player.AsyncChatEvent
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.Bukkit
@@ -25,6 +26,7 @@ class Issho : JavaPlugin(), Listener {
         EntityDamageEvent.DamageCause.FALL to "높은 높이",
         EntityDamageEvent.DamageCause.ENTITY_ATTACK to "ㅄ",
         EntityDamageEvent.DamageCause.BLOCK_EXPLOSION to "알라후아크바르",
+        EntityDamageEvent.DamageCause.ENTITY_EXPLOSION to "알라후아크바르",
         EntityDamageEvent.DamageCause.CAMPFIRE to "모닥불",
         EntityDamageEvent.DamageCause.SUFFOCATION to "산소가 없어서",
         EntityDamageEvent.DamageCause.DROWNING to "물은 답을 알고있다",
@@ -35,22 +37,9 @@ class Issho : JavaPlugin(), Listener {
     )
 
     override fun onEnable() {
-        logger.info("Hello v1")
+        logger.info("Hello v1.1")
 
         server.pluginManager.registerEvents(this, this)
-//        server.scheduler.scheduleSyncRepeatingTask(this, Runnable {
-//            server.onlinePlayers.forEach {player ->
-//                val uuid = player.uniqueId.toString()
-//
-//                val oldInv = invhm.get(uuid)
-//                val newInv = player.inventory.map { itemStack -> Base64ItemStack.encode(itemStack) }.joinToString { "--" }
-//
-//                if (!oldInv.equals(newInv)) {
-//                    invhm.set(uuid, newInv)
-//                    updateOthersInventory(player.inventory)
-//                }
-//            }
-//        }, 0L, 1L)
     }
 
     override fun onDisable() {
@@ -63,7 +52,7 @@ class Issho : JavaPlugin(), Listener {
 
         val other = server.onlinePlayers.find {player -> player.uniqueId !== targetPlayer.uniqueId}
 
-        if (other !== null) setPlayerInventory(targetPlayer, other.inventory)
+        if (other !== null) patchPlayer(targetPlayer, other)
     }
 
     @EventHandler
@@ -80,16 +69,14 @@ class Issho : JavaPlugin(), Listener {
     fun onDeath(event: PlayerDeathEvent) {
         val deadPlayer = event.player
 
-        server.scheduler.runTask(this, Runnable {
-            server.onlinePlayers.forEach { player ->
-                if (player.uniqueId != deadPlayer.uniqueId) {
-                    player.sendHurtAnimation(80F)
-                    player.playSound(player.location, Sound.BLOCK_ANVIL_DESTROY, 1f, 1f)
-                    player.sendMessage("누가 뒤짐 ㅅㄱ")
-                    player.inventory.clear()
-                }
+        server.onlinePlayers.forEach { player ->
+            if (player.uniqueId != deadPlayer.uniqueId) {
+                player.sendHurtAnimation(80F)
+                player.playSound(player.location, Sound.BLOCK_ANVIL_DESTROY, 1f, 1f)
+                player.sendMessage("누가 뒤짐 ㅅㄱ")
+                player.inventory.clear()
             }
-        })
+        }
 
     }
 
@@ -192,18 +179,33 @@ class Issho : JavaPlugin(), Listener {
         updateOthersInventory(event.player)
     }
 
+    @EventHandler
+    fun onChat(event: AsyncChatEvent) {
+        event.renderer{a, b, c, d -> }
+    }
+
     private fun updateOthersInventory(criteria: Player) {
         server.scheduler.runTask(this, Runnable {
             criteria.updateInventory()
-            server.onlinePlayers.forEach { target -> setPlayerInventory(target, criteria.inventory) }
+            server.onlinePlayers.forEach { target -> patchPlayer(target, criteria) }
         })
     }
 
     private fun updateOthersInventory(criteria: PlayerInventory) {
-        server.onlinePlayers.forEach { target -> setPlayerInventory(target, criteria) }
+        server.onlinePlayers.forEach { target -> patchPlayer(target, criteria.holder as Player) }
     }
 
-    private fun setPlayerInventory(player: Player, inv: PlayerInventory) {
+    private fun patchPlayer(player: Player, criteria: Player) {
+        val inv = criteria.inventory
+
+        player.health = criteria.health
+        player.saturation = criteria.saturation
+        player.totalExperience = criteria.totalExperience
+
+        player.isVisualFire = criteria.isVisualFire
+        player.fireTicks = criteria.fireTicks
+        player.freezeTicks = criteria.freezeTicks
+
         player.inventory.contents = inv.contents
         player.inventory.extraContents = inv.extraContents
         player.inventory.armorContents = inv.armorContents
