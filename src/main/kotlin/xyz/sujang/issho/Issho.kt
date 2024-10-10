@@ -4,6 +4,7 @@ import com.destroystokyo.paper.event.player.PlayerArmorChangeEvent
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.Bukkit
+import org.bukkit.Sound
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -57,14 +58,21 @@ class Issho : JavaPlugin(), Listener {
     }
 
     @EventHandler
+    fun onPlayerRespawn(event: PlayerRespawnEvent) {
+        val targetPlayer = event.player
+
+        val other = server.onlinePlayers.find {player -> player.uniqueId !== targetPlayer.uniqueId}
+
+        if (other !== null) setPlayerInventory(targetPlayer, other.inventory)
+    }
+
+    @EventHandler
     fun onJoin(event: PlayerJoinEvent) {
         event.player.sendMessage("왜사냐")
     }
 
     @EventHandler
     fun onDrop(event: PlayerDropItemEvent) {
-        event.player.sendMessage("drop")
-
         updateOthersInventory(event.player.inventory)
     }
 
@@ -72,13 +80,17 @@ class Issho : JavaPlugin(), Listener {
     fun onDeath(event: PlayerDeathEvent) {
         val deadPlayer = event.player
 
-        server.onlinePlayers.forEach { player ->
-            if (player.uniqueId != deadPlayer.uniqueId) {
-                player.sendHurtAnimation(80F)
-                player.sendMessage("누가 뒤짐 ㅅㄱ")
-                player.inventory.clear()
+        server.scheduler.runTask(this, Runnable {
+            server.onlinePlayers.forEach { player ->
+                if (player.uniqueId != deadPlayer.uniqueId) {
+                    player.sendHurtAnimation(80F)
+                    player.playSound(player.location, Sound.BLOCK_ANVIL_DESTROY, 1f, 1f)
+                    player.sendMessage("누가 뒤짐 ㅅㄱ")
+                    player.inventory.clear()
+                }
             }
-        }
+        })
+
     }
 
     @EventHandler
