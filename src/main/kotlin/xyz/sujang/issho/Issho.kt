@@ -3,6 +3,7 @@ package xyz.sujang.issho
 import com.destroystokyo.paper.event.player.PlayerArmorChangeEvent
 import io.papermc.paper.event.player.AsyncChatEvent
 import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.TextComponent
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.Bukkit
 import org.bukkit.Sound
@@ -25,8 +26,8 @@ class Issho : JavaPlugin(), Listener {
     val message = mutableMapOf<EntityDamageEvent.DamageCause, String>(
         EntityDamageEvent.DamageCause.FALL to "높은 높이",
         EntityDamageEvent.DamageCause.ENTITY_ATTACK to "ㅄ",
-        EntityDamageEvent.DamageCause.BLOCK_EXPLOSION to "알라후아크바르",
-        EntityDamageEvent.DamageCause.ENTITY_EXPLOSION to "알라후아크바르",
+        EntityDamageEvent.DamageCause.BLOCK_EXPLOSION to "아랍인",
+        EntityDamageEvent.DamageCause.ENTITY_EXPLOSION to "아랍인",
         EntityDamageEvent.DamageCause.CAMPFIRE to "모닥불",
         EntityDamageEvent.DamageCause.SUFFOCATION to "산소가 없어서",
         EntityDamageEvent.DamageCause.DROWNING to "물은 답을 알고있다",
@@ -37,7 +38,7 @@ class Issho : JavaPlugin(), Listener {
     )
 
     override fun onEnable() {
-        logger.info("Hello v1.1")
+        logger.info("Hello v1.2.1")
 
         server.pluginManager.registerEvents(this, this)
     }
@@ -88,7 +89,7 @@ class Issho : JavaPlugin(), Listener {
         updateOthersInventory(player)
     }
 
-    // TODO: health, exp, effects, save
+    // TODO: save
 
     @EventHandler
     fun onInvDrag(event: InventoryDragEvent) {
@@ -181,13 +182,15 @@ class Issho : JavaPlugin(), Listener {
     @EventHandler
     fun onChat(event: AsyncChatEvent) {
         event.renderer { source, sourceName, message, viewer ->
-            val texts = Component.text("")
-
-            server.onlinePlayers.forEach { player -> texts.append(Component.text("<${player.name}>: ${message.toString()}")) }
-
+            var texts = Component.text("--- 새로운 채팅 ---")
+            server.onlinePlayers.forEach { player ->
+                texts = texts.appendNewline().append(Component.text("<${player.name}>: ")).append(message) as TextComponent
+            }
             texts
         }
     }
+
+    fun onFire(event: )
 
     private fun updateOthersInventory(criteria: Player) {
         server.scheduler.runTask(this, Runnable {
