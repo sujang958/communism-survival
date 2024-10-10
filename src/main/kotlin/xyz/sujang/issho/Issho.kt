@@ -38,7 +38,7 @@ class Issho : JavaPlugin(), Listener {
     )
 
     override fun onEnable() {
-        logger.info("Hello v1.2.1")
+        logger.info("Hello v1.2.2")
 
         server.pluginManager.registerEvents(this, this)
     }
@@ -51,14 +51,14 @@ class Issho : JavaPlugin(), Listener {
     fun onPlayerRespawn(event: PlayerRespawnEvent) {
         val targetPlayer = event.player
 
-        val other = server.onlinePlayers.find { player -> player.uniqueId !== targetPlayer.uniqueId }
-
-        if (other !== null) patchPlayer(targetPlayer, other)
+       initPlayer(targetPlayer)
     }
 
     @EventHandler
     fun onJoin(event: PlayerJoinEvent) {
         event.player.sendMessage("왜사냐")
+
+        initPlayer(event.player)
     }
 
     @EventHandler
@@ -190,8 +190,6 @@ class Issho : JavaPlugin(), Listener {
         }
     }
 
-    fun onFire(event: )
-
     private fun updateOthersInventory(criteria: Player) {
         server.scheduler.runTask(this, Runnable {
             criteria.updateInventory()
@@ -201,6 +199,12 @@ class Issho : JavaPlugin(), Listener {
 
     private fun updateOthersInventory(criteria: PlayerInventory) {
         server.onlinePlayers.forEach { target -> patchPlayer(target, criteria.holder as Player) }
+    }
+
+    private fun initPlayer(target: Player) {
+        val other = server.onlinePlayers.find { player -> player.uniqueId !== target.uniqueId }
+
+        if (other !== null) patchPlayer(target, other)
     }
 
     private fun patchPlayer(player: Player, criteria: Player) {
