@@ -50,7 +50,7 @@ class Issho : JavaPlugin(), Listener {
     fun onPlayerRespawn(event: PlayerRespawnEvent) {
         val targetPlayer = event.player
 
-        val other = server.onlinePlayers.find {player -> player.uniqueId !== targetPlayer.uniqueId}
+        val other = server.onlinePlayers.find { player -> player.uniqueId !== targetPlayer.uniqueId }
 
         if (other !== null) patchPlayer(targetPlayer, other)
     }
@@ -77,7 +77,6 @@ class Issho : JavaPlugin(), Listener {
                 player.inventory.clear()
             }
         }
-
     }
 
     @EventHandler
@@ -181,7 +180,13 @@ class Issho : JavaPlugin(), Listener {
 
     @EventHandler
     fun onChat(event: AsyncChatEvent) {
-        event.renderer{a, b, c, d -> }
+        event.renderer { source, sourceName, message, viewer ->
+            val texts = Component.text("")
+
+            server.onlinePlayers.forEach { player -> texts.append(Component.text("<${player.name}>: ${message.toString()}")) }
+
+            texts
+        }
     }
 
     private fun updateOthersInventory(criteria: Player) {
